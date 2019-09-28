@@ -1,16 +1,14 @@
 import hashlib
 import os
-import signal
 import subprocess
-import threading
-import time
 
 import pylru
 
+from dmoj.cptbox import NullSecurity, SecurePopen
 from dmoj.error import CompileError
-from .base_executor import BaseExecutor
+from dmoj.executors.base_executor import BaseExecutor
 from dmoj.judgeenv import env
-from dmoj.utils.communicate import safe_communicate, OutputLimitExceeded
+from dmoj.utils.communicate import OutputLimitExceeded
 from dmoj.utils.unicode import utf8bytes
 
 
@@ -63,41 +61,6 @@ class _CompiledExecutorMeta(type):
         return obj
 
 
-class TimedPopen(subprocess.Popen):
-    def __init__(self, *args, **kwargs):
-        self._time = kwargs.pop('time_limit', None)
-        super(TimedPopen, self).__init__(*args, **kwargs)
-
-        self.timed_out = False
-        if self._time:
-            # Spawn thread to kill process after it times out
-            self._shocker = threading.Thread(target=self._shocker_thread)
-            self._shocker.start()
-
-    def _shocker_thread(self):
-        # Though this shares a name with the shocker thread used for submissions, where the process shocker thread
-        # is a fine scalpel that ends a TLE process with surgical precision, this is more like a rusty hatchet
-        # that beheads a misbehaving compiler.
-        #
-        # It's not very accurate: time starts ticking in the next line, regardless of whether the process is
-        # actually running, and the time is updated in 0.25s intervals. Nonetheless, it serves the purpose of
-        # not allowing the judge to die.
-        #
-        # See <https://github.com/DMOJ/judge/issues/141>
-        start_time = time.time()
-
-        while self.returncode is None:
-            if time.time() - start_time > self._time:
-                self.timed_out = True
-                try:
-                    os.killpg(self.pid, signal.SIGKILL)
-                except OSError:
-                    # This can happen if the process exits quickly
-                    pass
-                break
-            time.sleep(0.25)
-
-
 class CompiledExecutor(BaseExecutor, metaclass=_CompiledExecutorMeta):
     executable_size = env.compiler_size_limit * 1024
     compiler_time_limit = env.compiler_time_limit
@@ -126,31 +89,25 @@ class CompiledExecutor(BaseExecutor, metaclass=_CompiledExecutorMeta):
     def get_compile_popen_kwargs(self):
         return {}
 
-    def create_executable_limits(self):
-        try:
-            import resource
-
-            def limit_executable():
-                os.setpgrp()
-                resource.setrlimit(resource.RLIMIT_FSIZE, (self.executable_size, self.executable_size))
-
-            return limit_executable
-        except ImportError:
-            return None
-
     def get_compile_process(self):
-        kwargs = {'stderr': subprocess.PIPE, 'cwd': self._dir, 'env': self.get_compile_env(),
-                  'preexec_fn': self.create_executable_limits(), 'time_limit': self.compiler_time_limit}
-        kwargs.update(self.get_compile_popen_kwargs())
-
-        return TimedPopen(self.get_compile_args(), **kwargs)
+        return SecurePopen(self.get_compile_args(), **{
+            'stderr': subprocess.PIPE,
+            'cwd': self._dir,
+            'env': self.get_compile_env(),
+            'time': self.compiler_time_limit,
+            'fsize': self.executable_size,
+            'nproc': -1,
+            'memory': 524288,
+            'security': NullSecurity(),
+            **self.get_compile_popen_kwargs()
+        })
 
     def get_compile_output(self, process):
         # Use safe_communicate because otherwise, malicious submissions can cause a compiler
         # to output hundreds of megabytes of data as output before being killed by the time limit,
         # which effectively murders the MySQL database waiting on the site server.
         limit = env.compiler_output_character_limit
-        return safe_communicate(process, None, outlimit=limit, errlimit=limit)[self.compile_output_index]
+        return process.communicate(None, outlimit=limit, errlimit=limit)[self.compile_output_index]
 
     def get_compiled_file(self):
         return self._file(self.problem)

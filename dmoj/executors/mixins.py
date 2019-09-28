@@ -104,8 +104,8 @@ class PlatformExecutorMixin(object):
         }
         env.update(self.get_env())
 
-        return SecurePopen([utf8bytes(a) for a in self.get_cmdline() + list(args)],
-                           executable=utf8bytes(self.get_executable()),
+        return SecurePopen(self.get_cmdline() + list(args),
+                           executable=self.get_executable(),
                            security=self.get_security(launch_kwargs=kwargs),
                            address_grace=self.get_address_grace(),
                            data_grace=self.data_grace,
@@ -117,7 +117,7 @@ class PlatformExecutorMixin(object):
                            stdin=kwargs.get('stdin'),
                            stdout=kwargs.get('stdout'),
                            stderr=kwargs.get('stderr'),
-                           env=env, cwd=utf8bytes(self._dir),
+                           env=env, cwd=self._dir,
                            nproc=self.get_nproc(),
                            fsize=self.fsize)
 

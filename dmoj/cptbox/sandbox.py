@@ -21,6 +21,7 @@ log = logging.getLogger('dmoj.cptbox')
 
 
 def _find_exe(path):
+    path = utf8bytes(path)
     if os.path.isabs(path):
         return path
     if os.sep in path:
@@ -28,7 +29,7 @@ def _find_exe(path):
     for dir in os.environ.get('PATH', os.defpath).split(os.pathsep):
         p = os.path.join(dir, path)
         if os.access(p, os.X_OK):
-            return utf8bytes(p)
+            return p
     raise OSError()
 
 
@@ -154,9 +155,9 @@ class SecurePopen(Process, metaclass=SecurePopenMeta):
                  fds=None, wall_time=None):
         self._debugger_type = debugger
         self._syscall_index = index = _SYSCALL_INDICIES[debugger]
-        self._executable = executable or _find_exe(args[0])
-        self._args = args
-        self._chdir = cwd
+        self._executable = utf8bytes(executable or _find_exe(args[0]))
+        self._args = list(map(utf8bytes, args))
+        self._chdir = utf8bytes(cwd)
         self._env = [utf8bytes('%s=%s' % (arg, val))
                      for arg, val in (env if env is not None else os.environ).items() if val is not None]
         self._time = time
