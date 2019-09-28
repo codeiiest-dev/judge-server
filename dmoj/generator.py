@@ -8,7 +8,7 @@ from dmoj.utils import ansi
 class GeneratorManager(object):
     def get_generator(self, filenames, flags, lang=None, compiler_time_limit=None):
         from dmoj.executors import executors
-        from dmoj.executors.base_executor import CompiledExecutor
+        from dmoj.executors.base_executor import CompiledExecutor, CachedExecutor
 
         filenames = list(map(os.path.abspath, filenames))
         sources = {}
@@ -42,10 +42,12 @@ class GeneratorManager(object):
             compiler_time_limit = compiler_time_limit or clazz.compiler_time_limit
             clazz = type('Executor', (clazz,), {'compiler_time_limit': compiler_time_limit})
 
+        clazz = CachedExecutor.of_executor(clazz)
+
         # Optimize the common case.
         if use_cpp:
             # Some generators (like those using testlib.h) take an extremely long time to compile, so we cache them.
-            executor = clazz('_generator', None, aux_sources=sources, cached=True)
+            executor = clazz('_generator', None, aux_sources=sources)
         else:
             if len(sources) > 1:
                 raise InternalError('non-C/C++ generator cannot be multi-file')
