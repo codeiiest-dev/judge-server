@@ -9,7 +9,7 @@ from subprocess import Popen
 from dmoj.error import CompileError, InternalError
 from dmoj.result import Result
 from dmoj.utils.unicode import utf8bytes, utf8text
-from .base_executor import CompiledExecutor
+from dmoj.executors.compiled_executor import CompiledExecutor
 
 recomment = re.compile(r'/\*.*?\*/', re.DOTALL | re.U)
 restring = re.compile(r''''(?:\\.|[^'\\])'|"(?:\\.|[^"\\])*"''', re.DOTALL | re.U)

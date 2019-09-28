@@ -1,4 +1,4 @@
-from .base_executor import ScriptExecutor
+from dmoj.executors.script_executor import ScriptExecutor
 from dmoj.cptbox.handlers import ACCESS_EACCES
 
 

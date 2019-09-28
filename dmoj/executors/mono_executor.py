@@ -8,7 +8,7 @@ from dmoj.cptbox.handlers import ACCESS_EAGAIN
 from dmoj.cptbox.syscalls import *
 from dmoj.result import Result
 from dmoj.utils.unicode import utf8text
-from .base_executor import CompiledExecutor
+from dmoj.executors.compiled_executor import CompiledExecutor
 
 reexception = re.compile(r'\bFATAL UNHANDLED EXCEPTION: (.*?):', re.U)
 
