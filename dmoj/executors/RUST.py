@@ -95,7 +95,7 @@ class Executor(CompiledExecutor):
         return args
 
     def get_compile_env(self):
-        # Strip symbols, since --release doesn't be default.
+        # Strip symbols, since --release doesn't by default.
         return {'RUSTFLAGS': '-C link-arg=-s'}
 
     def get_compiled_file(self):
