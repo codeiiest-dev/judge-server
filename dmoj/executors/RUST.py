@@ -94,5 +94,9 @@ class Executor(CompiledExecutor):
             args += ['--offline']
         return args
 
+    def get_compile_env(self):
+        # Strip symbols, since --release doesn't be default.
+        return {'RUSTFLAGS': '-C link-arg=-s'}
+
     def get_compiled_file(self):
         return self._file('target', 'release', 'user_submission')
