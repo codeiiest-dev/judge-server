@@ -10,8 +10,9 @@ from dmoj.commands.resubmit import ResubmitCommand
 from dmoj.commands.show import ShowCommand
 from dmoj.commands.submissions import ListSubmissionsCommand
 from dmoj.commands.submit import SubmitCommand
+from dmoj.commands.test import TestCommand
 
 all_commands: List[Type[Command]] = [
-    ListProblemsCommand, ListSubmissionsCommand, SubmitCommand, ResubmitCommand, RejudgeCommand, DifferenceCommand,
-    ShowCommand, HelpCommand, QuitCommand,
+    ListProblemsCommand, ListSubmissionsCommand, SubmitCommand, ResubmitCommand, RejudgeCommand, TestCommand,
+    DifferenceCommand, ShowCommand, HelpCommand, QuitCommand,
 ]
