@@ -27,7 +27,7 @@ def check(process_output: bytes, judge_output: bytes, point_value: float, feedba
             count += 1
 
     return CheckerResult(count == len(judge_lines), point_value * (1.0 * count / len(judge_lines)),
-                         ''.join(cases) if feedback else "")
+                         extended_feedback='Case Feedback:\n' + ''.join(cases) if feedback else "")
 
 
 check.run_on_error = True  # type: ignore
