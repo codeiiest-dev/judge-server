@@ -37,13 +37,15 @@ class BridgedInteractiveGrader(StandardGrader):
     def _launch_process(self, case):
         submission_stdin, self._stdout_pipe = os.pipe()
         self._stdin_pipe, submission_stdout = os.pipe()
+
+        os.close(submission_stdin)
+        os.close(submission_stdout)
+
         self._current_proc = self.binary.launch(
             time=self.problem.time_limit, memory=self.problem.memory_limit, symlinks=case.config.symlinks,
             stdin=submission_stdin, stdout=submission_stdout, stderr=subprocess.PIPE,
             wall_time=case.config.wall_time_factor * self.problem.time_limit,
         )
-        os.close(submission_stdin)
-        os.close(submission_stdout)
 
     def _interact_with_process(self, case, result, input):
         output = case.output_data()
@@ -51,14 +53,14 @@ class BridgedInteractiveGrader(StandardGrader):
         self._interactor_memory_limit = self.handler_data.memory_limit or env['generator_memory_limit']
 
         with mktemp(input) as input_file, mktemp(output) as output_file:
+            os.close(self._stdin_pipe)
+            os.close(self._stdout_pipe)
+
             self._interactor = self.interactor_binary.launch(
                 input_file.name, output_file.name, time=self._interactor_time_limit,
                 memory=self._interactor_memory_limit, stdin=self._stdin_pipe, stdout=self._stdout_pipe,
                 stderr=subprocess.PIPE,
             )
-
-            os.close(self._stdin_pipe)
-            os.close(self._stdout_pipe)
 
             self._current_proc.wait()
             self._interactor.wait()
