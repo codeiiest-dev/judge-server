@@ -15,7 +15,7 @@ pt_debugger::pt_debugger() : on_return_callback(NULL) {}
 #if PTBOX_FREEBSD
     bool pt_debugger::use_peekdata = true;
 #else
-    bool pt_debugger::use_peekdata = false;
+    bool pt_debugger::use_peekdata = true;
 #endif
 
 bool has_null(char *buf, unsigned long size) {
